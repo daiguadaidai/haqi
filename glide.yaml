@@ -1,0 +1,20 @@
+package: github.com/daiguadaidai/haqi
+import:
+- package: github.com/cihub/seelog
+  version: ~2.6.0
+- package: github.com/go-sql-driver/mysql
+  version: ~1.4.1
+- package: github.com/jinzhu/gorm
+  version: ~1.9.2
+- package: github.com/ngaut/log
+- package: github.com/siddontang/go-mysql
+  subpackages:
+  - mysql
+  - replication
+- package: github.com/spf13/cobra
+  version: ~0.0.3
+- package: google.golang.org/appengine
+  repo: https://github.com/golang/appengine
+  vcs: git
+  subpackages:
+  - cloudsql

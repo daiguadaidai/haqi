@@ -1,2 +1,7 @@
 # haqi
-指定mysql binlog数据保存到另一个地点
+
+一款MySQL flashback 工具
+
+-----------
+
+

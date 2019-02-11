@@ -1,0 +1,48 @@
+hash: 24a2b8f97a95070f898878d5946eb77fd15185465204b5fb882d02f1fd6944e8
+updated: 2019-01-20T10:32:25.943957975+08:00
+imports:
+- name: github.com/cihub/seelog
+  version: d2c6e5aa9fbfdd1c624e140287063c7730654115
+- name: github.com/go-sql-driver/mysql
+  version: 72cd26f257d44c1114970e19afddcd812016007e
+- name: github.com/inconshreveable/mousetrap
+  version: 76626ae9c91c4f2a10f34cad8ce83ea42c93bb75
+- name: github.com/jinzhu/gorm
+  version: 472c70caa40267cb89fd8facb07fe6454b578626
+- name: github.com/jinzhu/inflection
+  version: 04140366298a54a039076d798123ffa108fff46c
+- name: github.com/ngaut/log
+  version: b8e36e7ba5ac61ce5644e570f1cc42d97dbaf8ed
+- name: github.com/pingcap/errors
+  version: 1176802fff62540cc87d289bd40c52a2d6b2ea16
+- name: github.com/satori/go.uuid
+  version: b2ce2384e17bbe0c6d34077efa39dbab3e09123b
+- name: github.com/shopspring/decimal
+  version: cd690d0c9e2447b1ef2a129a6b7b49077da89b8e
+- name: github.com/siddontang/go
+  version: bdc77568d726a8702315ec4eafda030b6abc4f43
+  subpackages:
+  - hack
+- name: github.com/siddontang/go-log
+  version: 8d05993dda0722163e59b0e79e8c6dda6c38d5c0
+  subpackages:
+  - log
+  - loggers
+- name: github.com/siddontang/go-mysql
+  version: 00086da2c732585bc7b20a16c68e9b04ba339ced
+  subpackages:
+  - client
+  - mysql
+  - packet
+  - replication
+- name: github.com/spf13/cobra
+  version: ef82de70bb3f60c65fb8eebacbb2d122ef517385
+- name: github.com/spf13/pflag
+  version: 298182f68c66c05229eb03ac171abe6e309ee79a
+- name: google.golang.org/appengine
+  version: e9657d882bb81064595ca3b56cbe2546bbabf7b1
+  repo: https://github.com/golang/appengine
+  vcs: git
+  subpackages:
+  - cloudsql
+testImports: []
