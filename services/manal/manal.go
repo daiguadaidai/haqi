@@ -250,7 +250,7 @@ func (this *Manal) closeChan() {
 	}
 }
 
-func (this *Manal) Start() {
+func (this *Manal) Start() error {
 	wg := new(sync.WaitGroup)
 
 	wg.Add(1)
@@ -260,6 +260,17 @@ func (this *Manal) Start() {
 	go this.comsume(wg)
 
 	wg.Wait()
+
+	if !this.ProductSuccess {
+		return fmt.Errorf("binlog没有产生完成. binlog解析到 %s. 结束位点为 %s",
+			this.CurrentPosition.String(), this.EndPosition.String())
+	}
+	if !this.MComsume.Success {
+		return fmt.Errorf("binlog没有产生完成. binlog解析到 %s. 结束位点为 %s",
+			this.CurrentPosition.String(), this.EndPosition.String())
+	}
+
+	return nil
 }
 
 func (this *Manal) product(wg *sync.WaitGroup) {

@@ -32,5 +32,8 @@ func Start(tmc *config.ToMySQLConfig, odbc *config.DBConfig, tdbc *config.DBConf
 		syscall.Exit(1)
 	}
 
-	manal.Start()
+	if err := manal.Start(); err != nil {
+		seelog.Error(err)
+		syscall.Exit(1)
+	}
 }

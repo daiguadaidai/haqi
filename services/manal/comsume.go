@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/cihub/seelog"
 	"github.com/daiguadaidai/haqi/config"
+	"github.com/daiguadaidai/haqi/dao"
 	"github.com/daiguadaidai/haqi/models"
 	"github.com/daiguadaidai/haqi/schema"
 	"github.com/siddontang/go-mysql/replication"
@@ -46,9 +47,14 @@ func (this *MComsume) Comsume() error {
 				}
 			}
 		}
+		this.CurrPosition.File = ev.LogFile
+		this.CurrPosition.Position = ev.LogPos
+		seelog.Infof("位点: %s:%d 应用完成!", this.CurrPosition.File,
+			this.CurrPosition.Position)
 	}
 
 	this.Success = true
+	seelog.Info("binglog应用完成")
 	return nil
 }
 
@@ -62,7 +68,20 @@ func (this *MComsume) writeInsert(ev *replication.RowsEvent, tbl *schema.Table) 
 		}
 		buf.WriteString(fmt.Sprintf(tbl.InsertValuePlaceholderTemplate, row...))
 	}
+	fmt.Println(len(ev.Rows))
 
-	fmt.Println(buf.String())
+	defaultDao, err := dao.NewDefaultDao(this.TDBC.Host, this.TDBC.Port)
+	if err != nil {
+		return err
+	}
+	if buf.Len() < 10 { // insert 语句长度小于10返回记录日志
+		seelog.Warnf("无效的Insert语句 %s", buf.String())
+		return nil
+	}
+
+	if err = defaultDao.ExecDML(buf.String()); err != nil {
+		return err
+	}
+
 	return nil
 }
