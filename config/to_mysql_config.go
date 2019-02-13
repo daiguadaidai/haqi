@@ -5,9 +5,10 @@ import (
 )
 
 const (
-	ENABLE_TRANS_UPDATE = false
-	ENABLE_TRANS_INSERT = false
-	ENABLE_TRANS_DELETE = true
+	ENABLE_TRANS_UPDATE   = false
+	ENABLE_TRANS_INSERT   = false
+	ENABLE_TRANS_DELETE   = true
+	DEFAULT_SCHEMA_SUFFIX = "_archive"
 )
 
 var sc *ToMySQLConfig

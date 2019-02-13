@@ -47,6 +47,7 @@ Example:
     --enable-trans-insert=false \
     --enable-trans-update=false \
     --enable-trans-delete=true \
+    --schema-suffix=_archive \
     --ori-db-host="127.0.0.1" \
     --ori-db-port=3306 \
     --ori-db-username="root" \
@@ -105,6 +106,8 @@ func addManalCMD() {
 		config.ENABLE_TRANS_UPDATE, "是否启用执行 update")
 	manalCmd.PersistentFlags().BoolVar(&manalTMC.EnableTransDelete, "enable-trans-delete",
 		config.ENABLE_TRANS_DELETE, "是否启用执行 delete")
+	manalCmd.PersistentFlags().StringVar(&manalTMC.SchemaSuffix, "schema-suffix",
+		config.DEFAULT_SCHEMA_SUFFIX, "目标数据库后缀")
 	manalCmd.PersistentFlags().StringVar(&manalTMC.TaskUUID, "task-uuid",
 		"", "关联的任务UUID")
 	manalCmd.PersistentFlags().StringVar(&manalTMC.UpdateAPI, "update-api",

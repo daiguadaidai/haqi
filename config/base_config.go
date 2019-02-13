@@ -11,6 +11,7 @@ type BaseConfig struct {
 	EnableTransUpdate bool
 	EnableTransInsert bool
 	EnableTransDelete bool
+	SchemaSuffix      string
 }
 
 // 是否有开始位点信息

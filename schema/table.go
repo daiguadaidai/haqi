@@ -18,6 +18,7 @@ var (
 
 type Table struct {
 	SchemaName                     string
+	SchemaSuffix                   string // schema后缀
 	TableName                      string
 	ColumnNames                    []string
 	ColumnPos                      map[string]int // 每个字段对应的slice位置
@@ -30,12 +31,13 @@ type Table struct {
 }
 
 func (this *Table) String() string {
-	return fmt.Sprintf("%s.%s", this.SchemaName, this.TableName)
+	return fmt.Sprintf("%s.%s", this.GetSchema(), this.TableName)
 }
 
-func NewTable(sName string, tName string, host string, port int) (*Table, error) {
+func NewTable(sName string, sSuffix string, tName string, host string, port int) (*Table, error) {
 	t := new(Table)
 	t.SchemaName = sName
+	t.SchemaSuffix = sSuffix
 	t.TableName = tName
 
 	dao, err := dao.NewDefaultDao(host, port)
@@ -59,10 +61,14 @@ func NewTable(sName string, tName string, host string, port int) (*Table, error)
 	return t, nil
 }
 
+func (this *Table) GetSchema() string {
+	return fmt.Sprintf("%s%s", this.SchemaName, this.SchemaSuffix)
+}
+
 // 添加表的所有字段名
 func (this *Table) addColumnNames(dao *dao.DefaultDao) error {
 	var err error
-	if this.ColumnNames, err = dao.FindTableColumnNames(this.SchemaName, this.TableName); err != nil {
+	if this.ColumnNames, err = dao.FindTableColumnNames(this.GetSchema(), this.TableName); err != nil {
 		return err
 	}
 
@@ -76,7 +82,7 @@ func (this *Table) addColumnNames(dao *dao.DefaultDao) error {
 // 添加主键
 func (this *Table) addPK(dao *dao.DefaultDao) error {
 	// 获取 主键
-	pkColumnNames, err := dao.FindTablePKColumnNames(this.SchemaName, this.TableName)
+	pkColumnNames, err := dao.FindTablePKColumnNames(this.GetSchema(), this.TableName)
 	if err != nil {
 		return fmt.Errorf("获取主键字段名出错. %v", err)
 	}
@@ -88,7 +94,7 @@ func (this *Table) addPK(dao *dao.DefaultDao) error {
 	log.Warnf("表: %s 没有主键", this.String())
 
 	// 获取唯一键做 主键
-	ukColumnNames, ukName, err := dao.FindTableUKColumnNames(this.SchemaName, this.TableName)
+	ukColumnNames, ukName, err := dao.FindTableUKColumnNames(this.GetSchema(), this.TableName)
 	if err != nil {
 		return fmt.Errorf("获取唯一键做主键失败. %v", err)
 	}
@@ -127,7 +133,7 @@ func (this *Table) initSQLTemplate() {
 // 初始化 insert sql 模板
 func (this *Table) initInsertTemplate() {
 	template := "INSERT INTO `%s`.`%s`(`%s`) VALUES"
-	this.InsertTemplate = fmt.Sprintf(template, this.SchemaName, this.TableName,
+	this.InsertTemplate = fmt.Sprintf(template, this.GetSchema(), this.TableName,
 		strings.Join(this.ColumnNames, "`, `"))
 	this.InsertValuePlaceholderTemplate = fmt.Sprintf("(%s)",
 		utils.StrRepeat("%#v", len(this.ColumnNames), ","))
@@ -136,7 +142,7 @@ func (this *Table) initInsertTemplate() {
 // 初始化 update sql 模板
 func (this *Table) initUpdateTemplate() {
 	template := "UPDATE `%s`.`%s` SET %s WHERE %s;\n"
-	this.UpdateTemplate = fmt.Sprintf(template, this.SchemaName, this.TableName,
+	this.UpdateTemplate = fmt.Sprintf(template, this.GetSchema(), this.TableName,
 		utils.SqlExprPlaceholderByColumns(this.ColumnNames, "=", "%#v", ", "),
 		utils.SqlExprPlaceholderByColumns(this.PKColumnNames, "=", "%#v", "AND "))
 }
@@ -144,7 +150,7 @@ func (this *Table) initUpdateTemplate() {
 // 初始化 delete sql 模板
 func (this *Table) initDeleteTemplate() {
 	template := "DELETE FROM `%s`.`%s` WHERE %s;\n"
-	this.DeleteTemplate = fmt.Sprintf(template, this.SchemaName, this.TableName,
+	this.DeleteTemplate = fmt.Sprintf(template, this.GetSchema(), this.TableName,
 		utils.SqlExprPlaceholderByColumns(this.PKColumnNames, "=", "%#v", "AND "))
 }
 

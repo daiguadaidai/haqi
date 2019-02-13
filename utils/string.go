@@ -98,3 +98,10 @@ func SqlExprPlaceholderByColumns(names []string, symbol string, holder string, s
 	}
 	return strings.Join(exprs, sep)
 }
+
+// 替换 建表语句的表名
+func ReplaceCreateTableName(createSql, sName, tName string) string {
+	items := strings.Split(createSql, "\n")
+	items[0] = fmt.Sprintf("CREATE TABLE IF NOT EXISTS `%s`.`%s` (", sName, tName)
+	return strings.Join(items, "\n")
+}

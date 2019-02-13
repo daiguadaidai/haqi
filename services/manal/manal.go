@@ -53,7 +53,8 @@ func NewManal(tmc *config.ToMySQLConfig, odbc *config.DBConfig, tdbc *config.DBC
 	manal := new(Manal)
 	// 设置配置文件
 	manal.TMC = tmc
-	manal.ODBC = odbc
+	manal.ODBC = odbc // 源数据库配置信息
+	manal.TDBC = tdbc // 目标数据库配置信息
 
 	// 设置其他参数
 	manal.ctx, manal.cancel = context.WithCancel(context.Background())
@@ -97,9 +98,15 @@ func NewManal(tmc *config.ToMySQLConfig, odbc *config.DBConfig, tdbc *config.DBC
 
 // 保存需要进行rollback的表
 func (this *Manal) cacheTransTable(sName string, tName string) error {
+	// 获取表信息
 	key := fmt.Sprintf("%s.%s", sName, tName)
-	t, err := schema.NewTable(sName, tName, this.ODBC.Host, this.ODBC.Port)
+	t, err := schema.NewTable(sName, this.TMC.SchemaSuffix, tName, this.ODBC.Host, this.ODBC.Port)
 	if err != nil {
+		return err
+	}
+
+	// 比较和修复目标表结构
+	if err := CompareAndRePairTable(this.ODBC, this.TDBC, sName, this.TMC.SchemaSuffix, tName); err != nil {
 		return err
 	}
 

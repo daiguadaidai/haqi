@@ -5,6 +5,7 @@ import (
 	"github.com/daiguadaidai/haqi/gdbc"
 	"github.com/daiguadaidai/haqi/models"
 	"github.com/jinzhu/gorm"
+	"strings"
 )
 
 type DefaultDao struct {
@@ -181,4 +182,85 @@ func (this *DefaultDao) GetOldestAndNewestPos() (*models.Position, *models.Posit
 	}
 
 	return startPos, endPos, nil
+}
+
+// 执行 show create table sql语句
+// return: 建表语句, 表是否存在, 相关错误
+func (this *DefaultDao) ShowCreateTable(schema, table string) (string, bool, error) {
+	sqlStr := fmt.Sprintf("SHOW CREATE TABLE `%s`.`%s`", schema, table)
+	var ignore string
+	var showCreateSQL string
+
+	if err := this.DB.Raw(sqlStr).Row().Scan(&ignore, &showCreateSQL); err != nil {
+		if strings.HasSuffix(err.Error(), "doesn't exist") {
+			return "", false, nil
+		}
+		return "", false, err
+	}
+
+	return showCreateSQL, true, nil
+}
+
+func (this *DefaultDao) ColumnCRC32(schema, table string) (map[string]int64, error) {
+	columnCRC32Map := make(map[string]int64)
+
+	sqlStr := `
+    SELECT
+        COLUMN_NAME,
+        CRC32(CONCAT(
+            TABLE_NAME, '#',
+            COLUMN_NAME, '#',
+            IFNULL(COLUMN_DEFAULT, '0'), '#',
+            IS_NULLABLE, '#',
+            DATA_TYPE, '#',
+            COLUMN_TYPE, '#',
+            IFNULL(EXTRA, '0'), '#',
+            IFNULL(COLUMN_COMMENT, '0')
+        )) AS crc32
+    FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_SCHEMA = ? 
+        AND TABLE_NAME = ?;
+`
+
+	rows, err := this.DB.Raw(sqlStr).Rows()
+	if err != nil {
+		return nil, err
+	}
+
+	var cName string
+	var crc32 int64
+	for rows.Next() {
+		if err = rows.Scan(&cName, &crc32); err != nil {
+			return nil, err
+		}
+		columnCRC32Map[cName] = crc32
+	}
+
+	return columnCRC32Map, nil
+}
+
+// 表是否存在
+func (this *DefaultDao) ReCreateDB(sName string) error {
+	sqlStr := fmt.Sprintf("CREATE DATABASE IF NOT EXISTS `%s`")
+
+	if err := this.DB.Exec(sqlStr).Error; err != nil {
+		return err
+	}
+	return nil
+}
+
+// 表是否存在
+func (this *DefaultDao) CreateTable(sqlStr string) error {
+	if err := this.DB.Exec(sqlStr).Error; err != nil {
+		return err
+	}
+	return nil
+}
+
+// 执行Alter Table语句
+func (this *DefaultDao) AlterTable(sqlStr string) error {
+	if err := this.DB.Exec(sqlStr).Error; err != nil {
+		return err
+	}
+	return nil
 }
