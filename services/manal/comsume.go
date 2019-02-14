@@ -18,6 +18,7 @@ type MComsume struct {
 	EventChan     chan *EventData
 	TransTableMap map[string]*schema.Table
 	Success       bool
+	IsQuit        bool
 }
 
 func NewMComsume(tmc *config.ToMySQLConfig, tdbc *config.DBConfig) *MComsume {
@@ -35,14 +36,16 @@ func (this *MComsume) Comsume() error {
 			key := fmt.Sprintf("%s.%s", string(e.Table.Schema), string(e.Table.Table))
 			t, ok := this.TransTableMap[key]
 			if !ok {
-				seelog.Error("没有获取到表需要回滚的表信息(生成原sql数据的时候) %s.", key)
-				continue
+				seelog.Errorf("正在应用位点为(未完成): %s:%d", ev.LogFile, ev.LogPos)
+				return fmt.Errorf("没有获取到表需要回滚的表信息(生成原sql数据的时候) %s.", key)
 			}
 			switch ev.BinlogEvent.Header.EventType {
 			case replication.WRITE_ROWS_EVENTv0, replication.WRITE_ROWS_EVENTv1, replication.WRITE_ROWS_EVENTv2:
 			case replication.UPDATE_ROWS_EVENTv0, replication.UPDATE_ROWS_EVENTv1, replication.UPDATE_ROWS_EVENTv2:
 			case replication.DELETE_ROWS_EVENTv0, replication.DELETE_ROWS_EVENTv1, replication.DELETE_ROWS_EVENTv2:
 				if err := this.writeInsert(e, t); err != nil {
+					this.CurrPosition.File = ev.LogFile
+					this.CurrPosition.Position = ev.LogPos
 					return err
 				}
 			}
@@ -68,7 +71,6 @@ func (this *MComsume) writeInsert(ev *replication.RowsEvent, tbl *schema.Table) 
 		}
 		buf.WriteString(fmt.Sprintf(tbl.InsertValuePlaceholderTemplate, row...))
 	}
-	fmt.Println(len(ev.Rows))
 
 	defaultDao, err := dao.NewDefaultDao(this.TDBC.Host, this.TDBC.Port)
 	if err != nil {

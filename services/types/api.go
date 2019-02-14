@@ -6,75 +6,59 @@ import (
 	"github.com/daiguadaidai/haqi/utils"
 )
 
-type RealInfo interface {
-	ToJSON() (string, error)
-}
-
-type CreateRealInfo struct {
-	RollbackSQLFile string `json:"rollback_sql_file" form:"rollback_sql_file"`
-	OriSQLFile      string `json:"ori_sql_file" form:"ori_sql_file"`
-	Host            string `json:"host" form:"host"`
-	Port            int    `json:"port" form:"port"`
-}
-
-func (this *CreateRealInfo) ToJSON() (string, error) {
-	bytes, err := json.Marshal(this)
-	if err != nil {
-		return "", err
-	}
-	return string(bytes), nil
-}
-
-type ExecuteRealInfo struct {
-	RollbackSQLFile string `json:"rollback_sql_file" form:"rollback_sql_file"`
-	Host            string `json:"host" form:"host"`
-	Port            int    `json:"port" form:"port"`
-}
-
-func (this *ExecuteRealInfo) ToJSON() (string, error) {
-	bytes, err := json.Marshal(this)
-	if err != nil {
-		return "", err
-	}
-	return string(bytes), nil
-}
-
-type PutData struct {
+type TaskInfo struct {
 	TaskUUID   string `json:"task_uuid" form:"task_uuid"`
 	NotifyInfo string `json:"notify_info" form:"notify_info"`
 	RealInfo   string `json:"real_info" form:"real_info"`
 }
 
-type result struct {
-	Status  bool     `form:"status" json:"status"`
-	Message string   `form:"message" json:"message"`
-	Data    *PutData `form:"data" json:data`
+type ReadInfo struct {
+	EndLogFile string `json:"end_log_file" form:"end_log_file"`
+	EndLogPos  uint32 `json:"end_log_pos" form:"end_log_pos"`
 }
 
-func NewPutDataByURL(url string, taskUUID string) (*PutData, error) {
-	query := fmt.Sprintf("?task_uuid=%s", taskUUID)
-	raw, err := utils.GetURLRaw(url, query)
+type SaveInfo struct {
+	ParseLogFile string `json:"parse_log_file" form:"parse_log_file"`
+	ParseLogPos  uint32 `json:"parse_log_pos" form:"parse_log_pos"`
+	ApplyLogFile string `json:"apply_log_file" form:"apply_log_file"`
+	ApplyLogPos  uint32 `json:"apply_log_pos" form:"apply_log_pos"`
+	EndLogFile   string `json:"end_log_file" form:"end_log_file"`
+	EndLogPos    uint32 `json:"end_log_pos" form:"end_log_pos"`
+}
+
+func GetReadInfo(taskUUID string, api string) (*ReadInfo, error) {
+	apiData, err := utils.GetURL(api, fmt.Sprintf("?task_uuid=%s", taskUUID))
 	if err != nil {
 		return nil, err
 	}
-
-	rs := new(result)
-	if err = json.Unmarshal(raw, rs); err != nil {
-		return nil, err
+	if data, ok := apiData.(map[string]interface{}); ok {
+		if readInfoStr, haveData := data["notify_info"]; haveData {
+			readInfo := new(ReadInfo)
+			if err = json.Unmarshal([]byte(readInfoStr.(string)), readInfo); err != nil {
+				return nil, fmt.Errorf("数据转化出错误. data: %v. %v", data, err)
+			}
+			return readInfo, nil
+		}
+	} else {
+		return nil, fmt.Errorf("获取到未知数据: %T -> %v", data, data)
 	}
 
-	if !rs.Status {
-		return nil, fmt.Errorf("%v", rs.Message)
-	}
-
-	return rs.Data, nil
+	return nil, fmt.Errorf("没有获取到数据")
 }
 
-// 获取 realinfo
-func (this *PutData) GetRealInfo(obj interface{}) (interface{}, error) {
-	if err := json.Unmarshal([]byte(this.RealInfo), obj); err != nil {
-		return nil, err
+// 更新保存信息
+func UpdateSaveInfo(taskUUID string, api string, saveInfo *SaveInfo) error {
+	saveInfoStr, err := json.Marshal(saveInfo)
+	if err != nil {
+		return err
+	}
+	taskInfo := new(TaskInfo)
+	taskInfo.TaskUUID = taskUUID
+	taskInfo.RealInfo = string(saveInfoStr)
+
+	if _, err = utils.PutURL(api, taskInfo); err != nil {
+		return err
 	}
 
-	return obj, nil
+	return nil
 }

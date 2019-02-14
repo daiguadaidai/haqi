@@ -62,7 +62,7 @@ func GetEndPosition(bc *config.BaseConfig) *models.Position {
 	if bc.HaveEndPosInfo() {
 		return getPositionByPosInfo(bc.EndLogFile, bc.EndLogPos)
 	}
-	return nil
+	return getPositionByPosInfo("", 0)
 }
 
 /* 获取需要回滚的表

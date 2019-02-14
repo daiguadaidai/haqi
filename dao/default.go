@@ -222,7 +222,7 @@ func (this *DefaultDao) ColumnCRC32(schema, table string) (map[string]int64, err
         AND TABLE_NAME = ?;
 `
 
-	rows, err := this.DB.Raw(sqlStr).Rows()
+	rows, err := this.DB.Raw(sqlStr, schema, table).Rows()
 	if err != nil {
 		return nil, err
 	}
@@ -241,7 +241,7 @@ func (this *DefaultDao) ColumnCRC32(schema, table string) (map[string]int64, err
 
 // 表是否存在
 func (this *DefaultDao) ReCreateDB(sName string) error {
-	sqlStr := fmt.Sprintf("CREATE DATABASE IF NOT EXISTS `%s`")
+	sqlStr := fmt.Sprintf("CREATE DATABASE IF NOT EXISTS `%s`", sName)
 
 	if err := this.DB.Exec(sqlStr).Error; err != nil {
 		return err
